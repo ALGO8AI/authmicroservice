@@ -10,6 +10,7 @@ const PlatformUsers = sequelize.define(
         lastName: { type: DataTypes.STRING },
         userName: { type: DataTypes.STRING },
         profilePicUrl: { type: DataTypes.STRING },
+        designation: { type: DataTypes.STRING },
         address: { type: DataTypes.STRING },
         region: { type: DataTypes.STRING },
         country: { type: DataTypes.STRING },

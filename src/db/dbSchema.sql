@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `PlatformUsers` (
   `lastName` VARCHAR(255),
   `userName` VARCHAR(255),
   `profilePicUrl` VARCHAR(255),
+  `designation` VARCHAR(255),
   `address` VARCHAR(255),
   `region` VARCHAR(255),
   `country` VARCHAR(255),
