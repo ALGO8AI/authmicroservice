@@ -7,6 +7,9 @@ const passport = require("passport");
 const { rateLimit } = require("express-rate-limit");
 const { ApiError } = require("./utils/ApiError.js");
 const { ApiResponse } = require("./utils/ApiResponse.js");
+const path = require("path");
+const fs = require("fs")
+
 require('dotenv').config();
 
 const app = express();
@@ -54,6 +57,12 @@ app.use(
 );
 
 
+const UPLOAD_PATH = path.resolve(__dirname, '../uploads');
+if (!fs.existsSync(UPLOAD_PATH)) {
+    fs.mkdirSync(UPLOAD_PATH, { recursive: true });
+}
+
+
 
 app.use(morganMiddleware);
 
@@ -62,7 +71,7 @@ const { errorHandler } = require("./middlewares/error.middlewares.js");
 const healthcheckRouter = require("./routes/healthcheck.routes.js");
 
 const userRouter = require("./routes/apps/auth/user.routes.js");
-
+const uploadRouter = require("./routes/apps/general/upload.routes.js")
 // * Kitchen sink routes
 const statuscodeRouter = require("./routes/kitchen-sink/statuscode.routes.js");
 
@@ -75,6 +84,8 @@ app.use("/api/v1/healthcheck", healthcheckRouter);
 
 // * User APIs
 app.use("/api/v1/users", userRouter);
+
+app.use("/api/v1/documents", uploadRouter);
 
 // * API Documentation
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));

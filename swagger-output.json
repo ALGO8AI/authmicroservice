@@ -264,6 +264,22 @@
         }
       }
     },
+    "api/v1/documents/upload": {
+      "post": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/v1/kitchen-sink/status-codes/": {
       "get": {
         "description": "",
