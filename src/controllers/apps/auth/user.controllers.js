@@ -11,7 +11,7 @@ const {
     generateTemporaryToken,
 } = require("../../../utils/jwt.js");
 const { Op } = require("sequelize");
-const { forgotPasswordMailgenContent } = require("../../../utils/mailContentGen.js");
+const { forgotPasswordMailgenContent, newUserRegisterMailgen } = require("../../../utils/mailContentGen.js");
 const sendEmail = require("../../../utils/mailConfig.js");
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -383,6 +383,78 @@ const updateUserAvatar = async (req, res) => {
         .json(new ApiResponse(200, updatedUser, "Avatar updated successfully"));
 };
 
+const addNewUser = async (req, res) => {
+    try {
+        const { email, roleId, firstName } = req.body;
+
+        if(!email || !roleId || !firstName) return res.status(400).json(new ApiError(400, "Email or role or firstName is missing."))
+
+        const existedUser = await userQueries.findOne({ where: { email } });
+
+        if (existedUser) {
+            return res
+                .status(409)
+                .json(
+                    new ApiError(
+                        409,
+                        "User with email or username already exists",
+                        []
+                    )
+                );
+        }
+
+        const hashPassword = await generateHashPassword(`${firstName}@12345`);
+        req.body.password = hashPassword;
+        const user = await userQueries.create(req.body);
+
+        const createdUser = await userQueries.findById(user.userId, {
+            attributes: {
+                exclude: [
+                    "password",
+                    "pin",
+                    "refreshToken",
+                    "forgotPasswordToken",
+                    "forgotPasswordExpiry",
+                ],
+            },
+        });
+
+        if (!createdUser) {
+            return res
+                .status(500)
+                .json(
+                    new ApiError(
+                        500,
+                        "Something went wrong while registering the user"
+                    )
+                );
+        }
+
+        await sendEmail(
+            [user?.email],
+            "User Signed in successfully",
+            newUserRegisterMailgen(
+              user.firstName,
+              user.email,
+              `${firstName}@12345`
+            )
+        );
+
+        return res
+            .status(201)
+            .json(
+                new ApiResponse(
+                    201,
+                    { user: createdUser },
+                    "Users registered successfully."
+                )
+            );
+
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, error.message, error));
+    }
+}
+
 module.exports = {
     changeCurrentPassword,
     forgotPasswordRequest,
@@ -393,4 +465,5 @@ module.exports = {
     registerUser,
     resetForgottenPassword,
     updateUserAvatar,
+    addNewUser
 };
