@@ -22,6 +22,10 @@ const userQueries = {
         const data = await PlatformUsers.findOne(filter);
         if(!data) throw new Error('Record not found');
         return await data.update(body);
+    },
+    delete: async function (userId){
+        const data = await PlatformUsers.destroy({where: {userId}});
+        return data;
     }
 }
 

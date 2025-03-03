@@ -455,6 +455,39 @@ const addNewUser = async (req, res) => {
     }
 }
 
+const editUserDetails = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const {password, pin, refreshToken, forgotPasswordToken, forgotPasswordExpiry} = req.body;
+
+        if(password || pin || refreshToken || forgotPasswordToken || forgotPasswordExpiry) return res.status(400).json(new ApiError(400, "Restricted fields not allowed to edit."))
+        const updateDetails = await userQueries.findOneAndUpdate({userId}, req.body)
+
+        return res.status(200).json(new ApiResponse(200, updateDetails, "User updated successfully"))
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, error.message, error));
+    }
+}
+
+const deleteUser = async (req, res) => {
+    try {
+        const userId = req.params.userId
+        await userQueries.delete(userId)
+        return res.status(200).json(new ApiResponse(200, [], "User deleted successfully"))
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, error.message, error));
+    }
+}
+
+const getAllUsers = async (req, res) => {
+    try {
+        const data = await userQueries.getAllUsers()
+        return res.status(200).json(new ApiResponse(200, data, "Users fetched successfully."))
+    } catch (error) {
+        return res.status(500).json(new ApiError(500, error.message, error));
+    }
+}
+
 module.exports = {
     changeCurrentPassword,
     forgotPasswordRequest,
@@ -465,5 +498,8 @@ module.exports = {
     registerUser,
     resetForgottenPassword,
     updateUserAvatar,
-    addNewUser
+    addNewUser,
+    editUserDetails,
+    deleteUser,
+    getAllUsers
 };

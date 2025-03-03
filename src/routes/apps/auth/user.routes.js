@@ -11,6 +11,9 @@ const {
     resetForgottenPassword,
     updateUserAvatar,
     addNewUser,
+    editUserDetails,
+    getAllUsers,
+    deleteUser,
 } = require("../../../controllers/apps/auth/user.controllers.js");
 const {
     verifyJWT,
@@ -42,4 +45,9 @@ router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/change-password").post(verifyJWT, userChangeCurrentPasswordValidator(), validate, changeCurrentPassword);
 router.route("/add-new-user").post(verifyJWT, addNewUser);
+
+router.route("/update-user/:userId").post(verifyJWT, editUserDetails);
+router.route("/get-users").get(verifyJWT, getAllUsers);
+router.route("/delete-user/:userId").delete(verifyJWT, deleteUser);
+
 module.exports = router;
