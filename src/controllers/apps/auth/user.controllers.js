@@ -13,6 +13,8 @@ const {
 const { Op } = require("sequelize");
 const { forgotPasswordMailgenContent, newUserRegisterMailgen } = require("../../../utils/mailContentGen.js");
 const sendEmail = require("../../../utils/mailConfig.js");
+const bcrypt = require("bcrypt");
+const { generatePassword } = require("../../../utils/generatePassword.js");
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -387,7 +389,12 @@ const addNewUser = async (req, res) => {
     try {
         const { email, roleId, firstName } = req.body;
 
-        if(!email || !roleId || !firstName) return res.status(400).json(new ApiError(400, "Email or role or firstName is missing."))
+        if (!email || !roleId || !firstName)
+            return res
+                .status(400)
+                .json(
+                    new ApiError(400, "Email or role or firstName is missing.")
+                );
 
         const existedUser = await userQueries.findOne({ where: { email } });
 
@@ -402,8 +409,8 @@ const addNewUser = async (req, res) => {
                     )
                 );
         }
-
-        const hashPassword = await generateHashPassword(`${firstName}@12345`);
+        const plainPassword = generatePassword();
+        const hashPassword = await bcrypt.hash(plainPassword, 10);
         req.body.password = hashPassword;
         const user = await userQueries.create(req.body);
 
@@ -433,11 +440,7 @@ const addNewUser = async (req, res) => {
         await sendEmail(
             [user?.email],
             "User Signed in successfully",
-            newUserRegisterMailgen(
-              user.firstName,
-              user.email,
-              `${firstName}@12345`
-            )
+            newUserRegisterMailgen(user.firstName, user.email, plainPassword)
         );
 
         return res
@@ -449,44 +452,146 @@ const addNewUser = async (req, res) => {
                     "Users registered successfully."
                 )
             );
-
     } catch (error) {
         return res.status(500).json(new ApiError(500, error.message, error));
     }
-}
+};
 
 const editUserDetails = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const {password, pin, refreshToken, forgotPasswordToken, forgotPasswordExpiry} = req.body;
+        const {
+            password,
+            pin,
+            refreshToken,
+            forgotPasswordToken,
+            forgotPasswordExpiry,
+        } = req.body;
 
-        if(password || pin || refreshToken || forgotPasswordToken || forgotPasswordExpiry) return res.status(400).json(new ApiError(400, "Restricted fields not allowed to edit."))
-        const updateDetails = await userQueries.findOneAndUpdate({userId}, req.body)
+        if (
+            password ||
+            pin ||
+            refreshToken ||
+            forgotPasswordToken ||
+            forgotPasswordExpiry
+        )
+            return res
+                .status(400)
+                .json(
+                    new ApiError(400, "Restricted fields not allowed to edit.")
+                );
+        const updateDetails = await userQueries.findOneAndUpdate(
+            { where: { userId } },
+            req.body
+        );
 
-        return res.status(200).json(new ApiResponse(200, updateDetails, "User updated successfully"))
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, updateDetails, "User updated successfully")
+            );
     } catch (error) {
         return res.status(500).json(new ApiError(500, error.message, error));
     }
-}
+};
 
 const deleteUser = async (req, res) => {
     try {
-        const userId = req.params.userId
-        await userQueries.delete(userId)
-        return res.status(200).json(new ApiResponse(200, [], "User deleted successfully"))
+        const userId = req.params.userId;
+        await userQueries.deleteOne({ where: { userId } });
+        return res
+            .status(200)
+            .json(new ApiResponse(200, [], "User deleted successfully"));
     } catch (error) {
         return res.status(500).json(new ApiError(500, error.message, error));
     }
-}
+};
 
 const getAllUsers = async (req, res) => {
     try {
-        const data = await userQueries.getAllUsers()
-        return res.status(200).json(new ApiResponse(200, data, "Users fetched successfully."))
+        const data = await userQueries.find({});
+        return res
+            .status(200)
+            .json(new ApiResponse(200, data, "Users fetched successfully."));
     } catch (error) {
         return res.status(500).json(new ApiError(500, error.message, error));
     }
-}
+};
+
+const getUserDetails = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const data = await userQueries.findOne({ where: { userId } });
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, data, "User data fetched successfully.")
+            );
+    } catch (error) {
+        return res
+            .status(500)
+            .json(new ApiError(500, "Internal Server error."));
+    }
+};
+
+const createNewPassword = async (req, res) => {
+    try {
+        const { email, oldPassword, newPassword, confirmNewPassword } =
+            req.body;
+
+        if (!email || !oldPassword || !newPassword || !confirmNewPassword) {
+            return res
+                .status(400)
+                .json(
+                    new ApiError(
+                        400,
+                        "All fields (email, oldPassword, newPassword, confirmNewPassword) are required"
+                    )
+                );
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            return res
+                .status(400)
+                .json(new ApiError(400, "New passwords do not match"));
+        }
+
+        const user = await userQueries.findOne({ where: { email } });
+        if (!user) {
+            return res
+                .status(404)
+                .json(new ApiError(404, "User with this email not found"));
+        }
+
+        const isPasswordValid = await isPasswordCorrect(
+            oldPassword,
+            user.password
+        );
+
+        if (!isPasswordValid) {
+            return res
+                .status(401)
+                .json(new ApiError(401, "Invalid user credentials"));
+        }
+
+        const hashedPassword = await generateHashPassword(newPassword);
+        await userQueries.findOneAndUpdate(
+            { where: { email } },
+            {
+                password: hashedPassword,
+            }
+        );
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, {}, "Password updated successfully"));
+    } catch (error) {
+        if (error.message === "Record not found") {
+            return res.status(404).json(new ApiError(404, error.message));
+        }
+        return res.status(500).json(new ApiError(500, error.message, error));
+    }
+};
 
 module.exports = {
     changeCurrentPassword,
@@ -501,5 +606,7 @@ module.exports = {
     addNewUser,
     editUserDetails,
     deleteUser,
-    getAllUsers
+    getAllUsers,
+    getUserDetails,
+    createNewPassword
 };
