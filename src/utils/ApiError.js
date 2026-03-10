@@ -1,7 +1,3 @@
-/**
- * @description Common Error class to throw an error from anywhere.
- * The {@link errorHandler} middleware will catch this error at the central place and it will return an appropriate response to the client
- */
 class ApiError extends Error {
   /**
    *
@@ -19,7 +15,6 @@ class ApiError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.data = null;
-    this.message = message;
     this.success = false;
     this.errors = errors;
 
@@ -28,6 +23,17 @@ class ApiError extends Error {
     } else {
       Error.captureStackTrace(this, this.constructor);
     }
+  }
+
+  // Define how the object should be serialized to JSON
+  toJSON() {
+    return {
+      statusCode: this.statusCode,
+      data: this.data,
+      success: this.success,
+      message: this.message, // Include the message
+      errors: this.errors,
+    };
   }
 }
 

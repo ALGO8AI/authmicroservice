@@ -1,8 +1,7 @@
-const mongoose = require("mongoose");
-
 const logger = require("../logger/winston.logger.js");
 const { ApiError } = require("../utils/ApiError.js");
 const { asyncHandler } = require("../utils/asyncHandler.js");
+const sequelize = require("sequelize");
 
 /**
  *
@@ -24,7 +23,7 @@ const errorHandler = (err, req, res, next) => {
 
     // assign an appropriate status code
     const statusCode =
-      error.statusCode || error instanceof mongoose.Error ? 400 : 500;
+      error.statusCode || error instanceof sequelize.Error ? 400 : 500;
 
     // set a message from native Error instance or a custom one
     const message = error.message || "Something went wrong";

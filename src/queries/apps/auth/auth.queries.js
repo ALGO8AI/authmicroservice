@@ -1,27 +1,37 @@
-const { User } = require("../../../models/apps/auth/user.models");
+const PlatformUsers = require("../../../models/apps/auth/PlatformUsers.models");
 
 
 const userQueries = {
     findOne: async function(filter){
-        const data = await User.findOne(filter);
+        const data = await PlatformUsers.findOne(filter);
         return data;
     },
-    findById: async function(id, selectString=""){
-        const data = await User.findById(id).select(selectString);
+    findById: async function(id, options){
+        const data = await PlatformUsers.findByPk(id, options)
         return data;
     },
     find: async function (filter){
-        const data = await User.find(filter);
+        const data = await PlatformUsers.findAll(filter);
         return data;
     },
     create: async function(body){
-        const data = await User.create(body);
+        const data = await PlatformUsers.create(body);
         return data;
     },
-    findByIdAndUpdate: async function (condition, body, options={}){
-        const data = await User.findByIdAndUpdate(condition, body, options);
+    findOneAndUpdate: async function (filter, body){
+        const data = await PlatformUsers.findOne(filter);
+        if(!data) throw new Error('Record not found');
+        return await data.update(body);
+    },
+    delete: async function (userId){
+        const data = await PlatformUsers.destroy({where: {userId}});
         return data;
-    }
+    },
+    deleteOne: async function (filter) {
+        const data = await PlatformUsers.findOne(filter);
+        if (!data) throw new Error("Record not found");
+        return await data.destroy();
+    },
 }
 
 module.exports = userQueries
