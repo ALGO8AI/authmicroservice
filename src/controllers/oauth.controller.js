@@ -217,7 +217,10 @@ export const googleFailed = asyncHandler(async (req, _res) => {
  * testing.
  */
 export const googleSuccess = asyncHandler(async (req, res) => {
-  const { accessToken, userId } = req.query;
+  const { userId } = req.query;
+
+  // Read the accessToken from the httpOnly cookie set by googleCallback.
+  const accessToken = req.cookies?.accessToken;
 
   if (!accessToken) {
     throw new ApiError(400, "Missing access token");

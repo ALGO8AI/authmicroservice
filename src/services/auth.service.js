@@ -2,6 +2,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { ApiError } from "../utils/ApiError.js";
+import { UserRolesEnum } from "../constants.js";
 import userQueries, { EXCLUDED_FIELDS } from "../queries/auth.queries.js";
 import {
   generateAccessToken,
@@ -9,6 +10,7 @@ import {
   generateTemporaryToken,
 } from "../utils/jwt.js";
 import { generateHashPassword, isPasswordCorrect } from "../utils/password.js";
+import logger from "../logger/winston.logger.js";
 import { forgotPasswordMailgenContent, sendEmail } from "../utils/mail.js";
 
 // Sequelize options object — reused wherever a query must exclude sensitive fields.
@@ -52,7 +54,11 @@ export const registerUser = async ({ email, password }) => {
 
   const hashPassword = await generateHashPassword(password);
 
-  const user = await userQueries.create({ email, password: hashPassword });
+  const user = await userQueries.create({
+    email,
+    password: hashPassword,
+    roleId: UserRolesEnum.USER,
+  });
 
   const createdUser = await userQueries.findById(user.userId, SAFE_ATTRS);
 
@@ -143,14 +149,22 @@ export const forgotPasswordRequest = async (email) => {
   user.forgotPasswordExpiry = tokenExpiry;
   await user.save();
 
-  await sendEmail(
+  const userName = user.firstName || "User";
+  const emailResult = await sendEmail(
     [user.email],
     "Password reset request",
     forgotPasswordMailgenContent(
-      user.firstName,
+      userName,
       `${process.env.RESET_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
     ),
   );
+
+  if (!emailResult.flag) {
+    logger.error("Failed to send password reset email", {
+      email: user.email,
+      error: emailResult.error?.message,
+    });
+  }
 };
 
 export const resetForgottenPassword = async ({ resetToken, newPassword }) => {
@@ -242,6 +256,18 @@ export const editUserDetails = async ({ userId, updateData }) => {
     throw new ApiError(400, "No valid fields provided to update");
   }
 
+  // Fetch the target user first to check their role.
+  const targetUser = await userQueries.findById(userId);
+
+  if (!targetUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Prevent editing another Admin's details.
+  if (targetUser.roleId === UserRolesEnum.ADMIN) {
+    throw new ApiError(403, "Admin details cannot be modified");
+  }
+
   const updatedUser = await userQueries.findOneAndUpdate(
     { userId },
     sanitizedData,
@@ -255,6 +281,18 @@ export const editUserDetails = async ({ userId, updateData }) => {
 };
 
 export const deleteUser = async (userId) => {
+  // Fetch the target user first to check their role.
+  const targetUser = await userQueries.findById(userId);
+
+  if (!targetUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // Prevent deleting an Admin.
+  if (targetUser.roleId === UserRolesEnum.ADMIN) {
+    throw new ApiError(403, "Admin users cannot be deleted");
+  }
+
   const deletedCount = await userQueries.delete(userId);
   if (deletedCount === 0) {
     throw new ApiError(404, "User not found");

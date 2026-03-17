@@ -13,6 +13,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/",
     "init-db": "node scripts/init-db.js",
+    "create-admin": "node scripts/create-admin.js",
     "swagger": "echo \"API docs are defined in swagger.yaml — edit that file directly and restart the server\""
   },
   "repository": {
