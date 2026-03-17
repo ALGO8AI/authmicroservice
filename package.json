@@ -1,13 +1,19 @@
 {
   "name": "auth-microservice",
   "version": "1.0.0",
-  "description": "Authorization microservice with Node.js and MongoDB",
+  "description": "Authorization microservice with Node.js and MySQL",
   "main": "src/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "swagger": "node ./swagger.js"
+    "lint": "eslint src/",
+    "init-db": "node scripts/init-db.js",
+    "swagger": "echo \"API docs are defined in swagger.yaml — edit that file directly and restart the server\""
   },
   "repository": {
     "type": "git",
@@ -22,31 +28,30 @@
   "dependencies": {
     "axios": "^1.7.8",
     "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-compression": "^1.0.2",
     "express-rate-limit": "^7.3.0",
     "express-session": "^1.18.0",
     "express-validator": "^7.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mailgen": "^2.0.28",
-    "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.11.5",
-    "passport": "^0.7.0",
-    "passport-github2": "^0.1.12",
-    "passport-google-oauth2": "^0.2.0",
-    "passport-google-oauth20": "^2.0.0",
     "sequelize": "^6.37.5",
-    "swagger-autogen": "^2.23.7",
     "swagger-ui-express": "^5.0.1",
-    "winston": "^3.13.0"
+    "winston": "^3.13.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0",
     "nodemon": "^3.1.2",
-    "prettier": "^3.3.0"
+    "prettier": "^3.8.1"
   }
 }

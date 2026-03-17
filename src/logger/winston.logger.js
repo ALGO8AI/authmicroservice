@@ -1,4 +1,5 @@
-const winston = require("winston")
+import winston from "winston";
+
 // Define your severity levels.
 const levels = {
   error: 0,
@@ -36,17 +37,16 @@ winston.addColors(colors);
 // Chose the aspect of your log customizing the log format.
 const format = winston.format.combine(
   // Add the message timestamp with the preferred format
-  winston.format.timestamp({ format: "DD MMM, YYYY - HH:mm:ss:ms" }),
+  winston.format.timestamp({ format: "DD MMM, YYYY - HH:mm:ss:SSS" }),
   // Tell Winston that the logs must be colored
   winston.format.colorize({ all: true }),
   // Define the format of the message showing the timestamp, the level and the message
   winston.format.printf(
-    (info) => `[${info.timestamp}] ${info.level}: ${info.message}`
-  )
+    (info) => `[${info.timestamp}] ${info.level}: ${info.message}`,
+  ),
 );
 
 // Define which transports the logger must use to print out messages.
-// In this example, we are using three different transports
 const transports = [
   // Allow the use the console to print the messages
   new winston.transports.Console(),
@@ -61,4 +61,4 @@ const logger = winston.createLogger({
   transports,
 });
 
-module.exports = logger;
+export default logger;
