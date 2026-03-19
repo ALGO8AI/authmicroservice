@@ -87,30 +87,23 @@ export const forgotPasswordRequest = asyncHandler(async (req, res) => {
   await authService.forgotPasswordRequest(req.body.email);
   return res
     .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {},
-        "Password reset mail has been sent on your mail id",
-      ),
-    );
+    .json(new ApiResponse(200, null, "Otp sent successfully."));
 });
 
-export const resetForgottenPassword = asyncHandler(async (req, res) => {
-  const { resetToken } = req.params;
-  const { newPassword } = req.body;
+export const verifyUserByOtp = asyncHandler(async (req, res) => {
+  const { email, newPassword, inputedOtp } = req.body;
 
-  if (!resetToken || !newPassword || newPassword.length < 8) {
+  if (!email || !newPassword || !inputedOtp || newPassword.length < 8) {
     throw new ApiError(
       400,
-      "Reset token and a valid new password (min 8 chars) are required",
+      "Email, inputedOtp and a valid new password (min 8 chars) are required",
     );
   }
 
-  await authService.resetForgottenPassword({ resetToken, newPassword });
+  await authService.verifyUserByOtp({ email, newPassword, inputedOtp });
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Password reset successfully"));
+    .json(new ApiResponse(200, null, "Password changed successfully."));
 });
 
 export const changeCurrentPassword = asyncHandler(async (req, res) => {

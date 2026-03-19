@@ -51,8 +51,12 @@ export const userForgotPasswordValidator = () => {
   return [emailValidator()];
 };
 
-export const userResetForgottenPasswordValidator = () => {
-  return [passwordValidator("newPassword")];
+export const verifyUserByOtpValidator = () => {
+  return [
+    emailValidator(),
+    passwordValidator("newPassword"),
+    body("inputedOtp").notEmpty().withMessage("OTP is required"),
+  ];
 };
 
 export const userAssignRoleValidator = () => {

@@ -247,7 +247,7 @@ The main user entity with fields for:
 - Identity: `userId` (UUID), `email`, `googleId`
 - Profile: `firstName`, `lastName`, `phone`, `profilePicUrl`, `designation`, etc.
 - Auth: `password` (nullable for OAuth users), `loginType`
-- Security: `refreshToken`, `forgotPasswordToken`, `forgotPasswordExpiry`
+- Security: `refreshToken`, `otp`, `generationTime`
 - Metadata: `roleId`, `status`, `createdBy`, `modifiedBy`
 
 ### Roles

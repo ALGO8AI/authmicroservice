@@ -4,8 +4,10 @@ export const EXCLUDED_FIELDS = [
   "password",
   "pin",
   "refreshToken",
-  "forgotPasswordToken",
-  "forgotPasswordExpiry",
+  "otp",
+  "generationTime",
+  "otpAttempts",
+  "otpLockedUntil",
 ];
 
 const userQueries = {

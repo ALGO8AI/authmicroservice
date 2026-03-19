@@ -139,7 +139,7 @@ This syncs all models to the database.
 
 ### Error: Column Too Small for JWT (Data Truncation)
 
-**Problem**: `refreshToken` or `forgotPasswordToken` data is truncated.
+**Problem**: `refreshToken` or `otp` data is truncated.
 
 **Solution**:
 

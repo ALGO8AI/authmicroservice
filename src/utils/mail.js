@@ -1,14 +1,26 @@
-import axios from "axios";
+import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
 import Mailgen from "mailgen";
+import logger from "../logger/winston.logger.js";
 
-const clientId = process.env.CLIENT_ID;
-const clientSecret = process.env.CLIENT_SECRET;
-const username = process.env.MAIL;
-const tenantId = process.env.MAIL_TENANT_ID;
+const FROM_EMAIL = process.env.MAILUSER;
+const FROM_NAME = process.env.MAIL_FROM_NAME || "AuthMicroservice";
+const PASSKEY = process.env.MAILPASS;
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.office365.com";
+const SMTP_PORT = parseInt(process.env.SMTP_PORT, 10) || 587;
 
-// ─── Helpers ────────────────────────────────────────────────────────────────────
+const MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024; // 3MB
+
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
+  auth: {
+    user: FROM_EMAIL,
+    pass: PASSKEY,
+  },
+});
 
 const getProductLink = () => {
   const link = process.env.PRODUCT_DOCS_URL;
@@ -23,8 +35,6 @@ const getProductLink = () => {
   return link;
 };
 
-const MAX_ATTACHMENT_SIZE = 3 * 1024 * 1024; // 3MB
-
 async function buildAttachments(filePaths) {
   const attachments = [];
 
@@ -38,9 +48,8 @@ async function buildAttachments(filePaths) {
       }
       const content = await fs.promises.readFile(filePath);
       attachments.push({
-        "@odata.type": "#microsoft.graph.fileAttachment",
-        name: path.basename(filePath),
-        contentBytes: content.toString("base64"),
+        filename: path.basename(filePath),
+        content,
       });
     } catch (err) {
       if (err.code === "ENOENT") {
@@ -55,40 +64,6 @@ async function buildAttachments(filePaths) {
   return attachments;
 }
 
-// ─── Token ────────────────────────────────────────────────────────────────────
-
-/**
- * Obtains a Microsoft Graph access token using the client_credentials flow.
- * No user credentials are required — the app itself is the principal.
- */
-async function accessToken(clientId, clientSecret) {
-  const tokenData = new URLSearchParams();
-  tokenData.append("client_id", clientId);
-  tokenData.append("client_secret", clientSecret);
-  tokenData.append("scope", "https://graph.microsoft.com/.default");
-  tokenData.append("grant_type", "client_credentials");
-
-  const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
-
-  try {
-    const response = await axios.post(tokenUrl, tokenData.toString(), {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      timeout: 10000,
-    });
-    return response.data.access_token;
-  } catch (error) {
-    const newError = new Error(
-      "Failed to obtain mail access token: " + error.message,
-    );
-    newError.cause = error;
-    throw newError;
-  }
-}
-
-// ─── Send Email ───────────────────────────────────────────────────────────────
-
 export async function sendEmail(
   to_emails,
   subject,
@@ -97,66 +72,52 @@ export async function sendEmail(
   filePaths = [],
 ) {
   try {
-    const token = await accessToken(clientId, clientSecret);
-    // URL-encode the username to handle special characters (e.g., + in email addresses)
-    const encodedUsername = encodeURIComponent(username);
-    const mailUrl = `https://graph.microsoft.com/v1.0/users/${encodedUsername}/sendMail`;
-
-    const toRecipients = to_emails.map((email) => ({
-      emailAddress: { address: email },
-    }));
-
-    const ccRecipients = cc_emails.map((email) => ({
-      emailAddress: { address: email },
-    }));
+    const toRecipients = Array.isArray(to_emails) ? to_emails : [to_emails];
+    const ccRecipients =
+      cc_emails.length > 0
+        ? Array.isArray(cc_emails)
+          ? cc_emails
+          : [cc_emails]
+        : [];
 
     const attachments =
       filePaths.length > 0 ? await buildAttachments(filePaths) : [];
 
-    const messagePayload = {
-      message: {
-        subject: subject,
-        body: {
-          contentType: "HTML",
-          content: mailBody,
-        },
-        toRecipients,
-        ccRecipients,
-        attachments,
-      },
-      saveToSentItems: true,
-    };
+    const info = await transporter.sendMail({
+      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+      to: toRecipients.join(", "),
+      cc: ccRecipients.length > 0 ? ccRecipients.join(", ") : undefined,
+      subject,
+      html: mailBody,
+      attachments,
+    });
 
-    const config = {
-      method: "POST",
-      url: mailUrl,
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json",
-      },
-      data: JSON.stringify(messagePayload),
-      timeout: 10000,
-    };
-
-    const response = await axios(config);
     return {
       flag: true,
-      statusCode: response.status,
+      messageId: info.messageId,
     };
   } catch (error) {
+    logger.error("Email send failed", {
+      to: to_emails,
+      subject,
+      error: error.message,
+      code: error.code,
+      command: error.command,
+      responseCode: error.responseCode,
+      response: error.response,
+    });
     return {
       flag: false,
       error: {
         message: error.message,
         name: error.name,
+        code: error.code,
       },
     };
   }
 }
 
-// ─── Mail Content Generators ──────────────────────────────────────────────────
-
-export const forgotPasswordMailgenContent = (userName, passwordResetUrl) => {
+export const forgotPasswordOtpMailgenContent = (userName, otp) => {
   const productLink = getProductLink();
   const mailGenerator = new Mailgen({
     theme: "default",
@@ -169,18 +130,13 @@ export const forgotPasswordMailgenContent = (userName, passwordResetUrl) => {
   return mailGenerator.generate({
     body: {
       name: userName,
-      intro: "We got a request to reset the password of your account",
-      action: {
-        instructions:
-          "To reset your password click on the following button or link:",
-        button: {
-          color: "#22BC66",
-          text: "Reset password",
-          link: passwordResetUrl,
-        },
-      },
+      intro: [
+        "We received a request to reset your password. Please use the following One-Time Password (OTP) to set your new password.",
+        "This OTP is valid for 5 minutes and can be used only once.",
+        `<h2 style="color:#2c3e50; text-align:center; letter-spacing:2px;">${otp}</h2>`,
+      ],
       outro:
-        "Need help, or have questions? Just reply to this email, we'd love to help.",
+        "If you did not request a password reset, please ignore this email.",
     },
   });
 };

@@ -18,41 +18,42 @@ This document describes the database schema, models, and management for the Auth
 
 The main user table storing all authentication and profile data.
 
-| Column                 | Type         | Constraints                        | Description                                 |
-| ---------------------- | ------------ | ---------------------------------- | ------------------------------------------- |
-| `userId`               | UUID         | PRIMARY KEY, DEFAULT UUIDV4        | Unique user identifier                      |
-| `email`                | VARCHAR(255) | UNIQUE, NOT NULL                   | User's email address                        |
-| `password`             | VARCHAR(255) | NULLABLE                           | Bcrypt hashed password (nullable for OAuth) |
-| `googleId`             | VARCHAR(255) | UNIQUE, NULLABLE                   | Google OAuth subject ID                     |
-| `loginType`            | VARCHAR(50)  | NOT NULL, DEFAULT 'EMAIL_PASSWORD' | Authentication method                       |
-| `firstName`            | VARCHAR(255) | NULLABLE                           | First name                                  |
-| `lastName`             | VARCHAR(255) | NULLABLE                           | Last name                                   |
-| `userName`             | VARCHAR(255) | NULLABLE                           | Username                                    |
-| `phone`                | VARCHAR(50)  | NULLABLE                           | Phone number                                |
-| `profilePicUrl`        | VARCHAR(500) | NULLABLE                           | URL to profile picture                      |
-| `designation`          | VARCHAR(255) | NULLABLE                           | Job title                                   |
-| `address`              | TEXT         | NULLABLE                           | Physical address                            |
-| `region`               | VARCHAR(100) | NULLABLE                           | Geographic region                           |
-| `country`              | VARCHAR(100) | NULLABLE                           | Country                                     |
-| `geoLocation`          | VARCHAR(255) | NULLABLE                           | Geographic coordinates                      |
-| `timezone`             | VARCHAR(50)  | NULLABLE                           | Timezone (e.g., "UTC+5:30")                 |
-| `language`             | VARCHAR(50)  | NULLABLE                           | Preferred language                          |
-| `roleId`               | VARCHAR(50)  | NULLABLE                           | User role (ADMIN, MANAGER, USER)            |
-| `pin`                  | VARCHAR(255) | NULLABLE                           | Optional PIN code                           |
-| `refreshToken`         | TEXT         | NULLABLE                           | Current refresh token                       |
-| `forgotPasswordToken`  | TEXT         | NULLABLE                           | Password reset token (hashed)               |
-| `forgotPasswordExpiry` | DATETIME     | NULLABLE                           | Password reset token expiry                 |
-| `status`               | VARCHAR(50)  | NULLABLE                           | Account status                              |
-| `createdBy`            | VARCHAR(255) | NULLABLE                           | Creator user ID                             |
-| `modifiedBy`           | VARCHAR(255) | NULLABLE                           | Last modifier user ID                       |
-| `createdAt`            | DATETIME     | NOT NULL                           | Record creation timestamp                   |
-| `modifiedAt`           | DATETIME     | NOT NULL                           | Record last update timestamp                |
+| Column           | Type         | Constraints                        | Description                                 |
+| ---------------- | ------------ | ---------------------------------- | ------------------------------------------- |
+| `userId`         | UUID         | PRIMARY KEY, DEFAULT UUIDV4        | Unique user identifier                      |
+| `email`          | VARCHAR(255) | UNIQUE, NOT NULL                   | User's email address                        |
+| `password`       | VARCHAR(255) | NULLABLE                           | Bcrypt hashed password (nullable for OAuth) |
+| `googleId`       | VARCHAR(255) | UNIQUE, NULLABLE                   | Google OAuth subject ID                     |
+| `loginType`      | VARCHAR(50)  | NOT NULL, DEFAULT 'EMAIL_PASSWORD' | Authentication method                       |
+| `firstName`      | VARCHAR(255) | NULLABLE                           | First name                                  |
+| `lastName`       | VARCHAR(255) | NULLABLE                           | Last name                                   |
+| `userName`       | VARCHAR(255) | NULLABLE                           | Username                                    |
+| `phone`          | VARCHAR(50)  | NULLABLE                           | Phone number                                |
+| `profilePicUrl`  | VARCHAR(500) | NULLABLE                           | URL to profile picture                      |
+| `designation`    | VARCHAR(255) | NULLABLE                           | Job title                                   |
+| `address`        | TEXT         | NULLABLE                           | Physical address                            |
+| `region`         | VARCHAR(100) | NULLABLE                           | Geographic region                           |
+| `country`        | VARCHAR(100) | NULLABLE                           | Country                                     |
+| `geoLocation`    | VARCHAR(255) | NULLABLE                           | Geographic coordinates                      |
+| `timezone`       | VARCHAR(50)  | NULLABLE                           | Timezone (e.g., "UTC+5:30")                 |
+| `language`       | VARCHAR(50)  | NULLABLE                           | Preferred language                          |
+| `roleId`         | VARCHAR(50)  | NULLABLE                           | User role (ADMIN, MANAGER, USER)            |
+| `pin`            | VARCHAR(255) | NULLABLE                           | Optional PIN code                           |
+| `refreshToken`   | TEXT         | NULLABLE                           | Current refresh token                       |
+| `otp`            | TEXT         | NULLABLE                           | Password reset OTP (bcrypt hashed)          |
+| `generationTime` | DATETIME     | NULLABLE                           | When the OTP was generated                  |
+| `status`         | VARCHAR(50)  | NULLABLE                           | Account status                              |
+| `createdBy`      | VARCHAR(255) | NULLABLE                           | Creator user ID                             |
+| `modifiedBy`     | VARCHAR(255) | NULLABLE                           | Last modifier user ID                       |
+| `createdAt`      | DATETIME     | NOT NULL                           | Record creation timestamp                   |
+| `modifiedAt`     | DATETIME     | NOT NULL                           | Record last update timestamp                |
 
 #### Key Design Decisions
 
 1. **`password` is nullable** — OAuth users (Google) don't have passwords
-2. **`refreshToken` and `forgotPasswordToken` are TEXT** — JWTs can exceed 255 characters
-3. **`loginType` distinguishes auth methods** — EMAIL_PASSWORD, GOOGLE, GITHUB
+2. **`refreshToken` is TEXT** — JWTs can exceed 255 characters
+3. **`otp` is TEXT** — bcrypt hashes can exceed 255 characters
+4. **`loginType` distinguishes auth methods** — EMAIL_PASSWORD, GOOGLE, GITHUB
 
 ---
 
@@ -200,8 +201,8 @@ Sensitive fields that are excluded from all query results:
 export const EXCLUDED_FIELDS = [
   "password",
   "refreshToken",
-  "forgotPasswordToken",
-  "forgotPasswordExpiry",
+  "otp",
+  "generationTime",
 ];
 ```
 

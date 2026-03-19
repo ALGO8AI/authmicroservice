@@ -45,9 +45,12 @@ GOOGLE_CALLBACK_URL=https://your-api-domain.com/api/v1/auth/google/callback
 OAUTH_SUCCESS_REDIRECT_URL=https://your-frontend-domain.com/auth/success
 OAUTH_FAILURE_REDIRECT_URL=https://your-frontend-domain.com/auth/failed
 
-# Email (optional)
-MAIL=your-email@domain.com
-RESET_PASSWORD_REDIRECT_URL=https://your-frontend-domain.com/reset-password
+# Email (SMTP via nodemailer)
+MAILUSER=your-email@domain.com
+MAILPASS=your-email-password-or-app-password
+MAIL_FROM_NAME=AuthMicroservice
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
 PRODUCT_DOCS_URL=https://your-docs-url.com
 ```
 
@@ -388,6 +391,10 @@ See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common production issues.
 | `REFRESH_TOKEN_SECRET` | Yes      | JWT refresh token secret |
 | `SESSION_SECRET`       | Yes      | Session secret           |
 | `CORS_ORIGIN`          | Yes      | Allowed origins          |
+| `MAILUSER`             | Yes      | Sender email address     |
+| `MAILPASS`             | Yes      | Email account password   |
+| `SMTP_HOST`            | No       | SMTP server host         |
+| `SMTP_PORT`            | No       | SMTP server port         |
 | `GOOGLE_CLIENT_ID`     | No       | Google OAuth             |
 | `GOOGLE_CLIENT_SECRET` | No       | Google OAuth             |
 | `GOOGLE_CALLBACK_URL`  | No       | OAuth callback           |

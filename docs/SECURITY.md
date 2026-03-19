@@ -157,8 +157,8 @@ Sensitive fields are excluded from all database queries:
 export const EXCLUDED_FIELDS = [
   "password",
   "refreshToken",
-  "forgotPasswordToken",
-  "forgotPasswordExpiry",
+  "otp",
+  "generationTime",
 ];
 ```
 

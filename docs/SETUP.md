@@ -37,31 +37,30 @@ cp .env.sample .env
 
 #### Environment Variables Reference
 
-| Variable                      | Required | Description                                                                                                                                  |
-| ----------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                    | Yes      | Environment: `development` or `production`                                                                                                   |
-| `PORT`                        | Yes      | Server port (default: `8080`)                                                                                                                |
-| `CORS_ORIGIN`                 | Yes      | Allowed origins for CORS (e.g., `http://localhost:3000`). **Never use `*` in production** — it allows any origin and enables CSRF/XSS risks. |
-| `DB_NAME`                     | Yes      | MySQL database name                                                                                                                          |
-| `DB_HOST`                     | Yes      | Database host (e.g., `localhost`, `127.0.0.1`)                                                                                               |
-| `DB_PORT`                     | Yes      | Database port (default: `3306`)                                                                                                              |
-| `DB_USER`                     | Yes      | Database username                                                                                                                            |
-| `DB_PASSWORD`                 | Yes      | Database password                                                                                                                            |
-| `ACCESS_TOKEN_SECRET`         | Yes      | Secret key for access tokens (min 32 chars)                                                                                                  |
-| `REFRESH_TOKEN_SECRET`        | Yes      | Secret key for refresh tokens (min 32 chars)                                                                                                 |
-| `SESSION_SECRET`              | Yes      | Secret for Express session (min 32 chars)                                                                                                    |
-| `CLIENT_ID`                   | No       | Microsoft OAuth client ID (for mail)                                                                                                         |
-| `CLIENT_SECRET`               | No       | Microsoft OAuth client secret                                                                                                                |
-| `MAIL`                        | No       | Email address for sending transactional emails                                                                                               |
-| `PASSKEY`                     | No       | Password/app key for the email account                                                                                                       |
-| `MAIL_TENANT_ID`              | No       | Microsoft tenant ID for Graph API                                                                                                            |
-| `RESET_PASSWORD_REDIRECT_URL` | No       | Frontend URL for password reset                                                                                                              |
-| `PRODUCT_DOCS_URL`            | No       | URL for product documentation in emails                                                                                                      |
-| `GOOGLE_CLIENT_ID`            | No       | Google OAuth client ID (required for OAuth)                                                                                                  |
-| `GOOGLE_CLIENT_SECRET`        | No       | Google OAuth client secret                                                                                                                   |
-| `GOOGLE_CALLBACK_URL`         | No       | OAuth callback URL                                                                                                                           |
-| `OAUTH_SUCCESS_REDIRECT_URL`  | No       | Frontend redirect after successful OAuth                                                                                                     |
-| `OAUTH_FAILURE_REDIRECT_URL`  | No       | Frontend redirect after failed OAuth                                                                                                         |
+| Variable                     | Required | Description                                                                                                                                  |
+| ---------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                   | Yes      | Environment: `development` or `production`                                                                                                   |
+| `PORT`                       | Yes      | Server port (default: `8080`)                                                                                                                |
+| `CORS_ORIGIN`                | Yes      | Allowed origins for CORS (e.g., `http://localhost:3000`). **Never use `*` in production** — it allows any origin and enables CSRF/XSS risks. |
+| `DB_NAME`                    | Yes      | MySQL database name                                                                                                                          |
+| `DB_HOST`                    | Yes      | Database host (e.g., `localhost`, `127.0.0.1`)                                                                                               |
+| `DB_PORT`                    | Yes      | Database port (default: `3306`)                                                                                                              |
+| `DB_USER`                    | Yes      | Database username                                                                                                                            |
+| `DB_PASSWORD`                | Yes      | Database password                                                                                                                            |
+| `ACCESS_TOKEN_SECRET`        | Yes      | Secret key for access tokens (min 32 chars)                                                                                                  |
+| `REFRESH_TOKEN_SECRET`       | Yes      | Secret key for refresh tokens (min 32 chars)                                                                                                 |
+| `SESSION_SECRET`             | Yes      | Secret for Express session (min 32 chars)                                                                                                    |
+| `MAILUSER`                   | Yes      | Email address for sending transactional emails                                                                                               |
+| `MAILPASS`                   | Yes      | Password/app key for the email account                                                                                                       |
+| `MAIL_FROM_NAME`             | No       | Sender name in emails (default: `AuthMicroservice`)                                                                                          |
+| `SMTP_HOST`                  | No       | SMTP server host (default: `smtp.office365.com`)                                                                                             |
+| `SMTP_PORT`                  | No       | SMTP server port (default: `587`)                                                                                                            |
+| `PRODUCT_DOCS_URL`           | No       | URL for product documentation in emails                                                                                                      |
+| `GOOGLE_CLIENT_ID`           | No       | Google OAuth client ID (required for OAuth)                                                                                                  |
+| `GOOGLE_CLIENT_SECRET`       | No       | Google OAuth client secret                                                                                                                   |
+| `GOOGLE_CALLBACK_URL`        | No       | OAuth callback URL                                                                                                                           |
+| `OAUTH_SUCCESS_REDIRECT_URL` | No       | Frontend redirect after successful OAuth                                                                                                     |
+| `OAUTH_FAILURE_REDIRECT_URL` | No       | Frontend redirect after failed OAuth                                                                                                         |
 
 #### Example `.env` File
 
@@ -80,7 +79,12 @@ ACCESS_TOKEN_SECRET=your_access_token_secret_min_32_chars
 REFRESH_TOKEN_SECRET=your_refresh_token_secret_min_32_chars
 SESSION_SECRET=your_session_secret_min_32_chars
 
-RESET_PASSWORD_REDIRECT_URL=http://localhost:3000/reset-password
+# Email (SMTP via nodemailer)
+MAILUSER=your_email@domain.com
+MAILPASS=your_email_password_or_app_password
+MAIL_FROM_NAME=AuthMicroservice
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
 PRODUCT_DOCS_URL=http://localhost:8080/docs
 
 GOOGLE_CLIENT_ID=your_google_client_id

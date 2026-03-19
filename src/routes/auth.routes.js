@@ -8,7 +8,7 @@ import {
   logoutUser,
   refreshAccessToken,
   registerUser,
-  resetForgottenPassword,
+  verifyUserByOtp,
   addNewUser,
   editUserDetails,
   getAllUsers,
@@ -24,7 +24,7 @@ import {
   userForgotPasswordValidator,
   userLoginValidator,
   userRegisterValidator,
-  userResetForgottenPasswordValidator,
+  verifyUserByOtpValidator,
   userRefreshTokenValidator,
   addNewUserValidator,
   userIdParamValidator,
@@ -91,13 +91,8 @@ router
     forgotPasswordRequest,
   );
 router
-  .route("/reset-password/:resetToken")
-  .post(
-    authLimiter,
-    userResetForgottenPasswordValidator(),
-    validate,
-    resetForgottenPassword,
-  );
+  .route("/verify-otp")
+  .post(authLimiter, verifyUserByOtpValidator(), validate, verifyUserByOtp);
 
 // Secured routes
 router.route("/logout").post(verifyJWT, logoutUser);

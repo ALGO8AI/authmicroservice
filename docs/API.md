@@ -299,7 +299,7 @@ Authorization: Bearer <accessToken>
 
 **POST** `/users/forgot-password`
 
-Request a password reset link sent to the user's email.
+Request a password reset OTP sent to the user's email.
 
 #### Request Body
 
@@ -321,42 +321,38 @@ Request a password reset link sent to the user's email.
 {
   "statusCode": 200,
   "data": null,
-  "message": "Password reset link sent to your email",
+  "message": "OTP sent successfully.",
   "success": true
 }
 ```
 
-> **Note**: The same response is returned regardless of whether the email exists, to prevent user enumeration.
-
 #### Error Responses
 
-- **400** — Validation error (invalid email format)
+- **400** — Validation error or `User not found.` or `Error sending OTP, try again later.`
 
 ---
 
-### 8. Reset Forgotten Password
+### 8. Verify OTP and Reset Password
 
-**POST** `/users/reset-password/:resetToken`
+**POST** `/users/verify-otp`
 
-Reset password using the token sent to the user's email.
-
-#### URL Parameters
-
-| Parameter    | Type   | Description                     |
-| ------------ | ------ | ------------------------------- |
-| `resetToken` | string | Password reset token from email |
+Reset password using the OTP sent to the user's email.
 
 #### Request Body
 
 | Field         | Type   | Required | Description                     |
 | ------------- | ------ | -------- | ------------------------------- |
+| `email`       | string | Yes      | Registered email address        |
 | `newPassword` | string | Yes      | New password (min 8 characters) |
+| `inputedOtp`  | string | Yes      | 6-digit OTP from email          |
 
 #### Example Request
 
 ```json
 {
-  "newPassword": "newSecurePassword123"
+  "email": "user@example.com",
+  "newPassword": "newSecurePassword123",
+  "inputedOtp": "123456"
 }
 ```
 
@@ -366,15 +362,14 @@ Reset password using the token sent to the user's email.
 {
   "statusCode": 200,
   "data": null,
-  "message": "Password reset successfully",
+  "message": "Password changed successfully.",
   "success": true
 }
 ```
 
 #### Error Responses
 
-- **400** — Validation error
-- **401** — Invalid or expired reset token
+- **400** — Validation error or `OTP is invalid or expired.` or `User not found.`
 
 ---
 
@@ -752,11 +747,11 @@ Check server and database health.
 
 ## Rate Limiting
 
-| Endpoint Category                                       | Limit                         |
-| ------------------------------------------------------- | ----------------------------- |
-| Auth (register, login, forgot-password, reset-password) | 10 requests / 15 minutes / IP |
-| Refresh token                                           | 20 requests / 15 minutes / IP |
-| All other endpoints                                     | No rate limit                 |
+| Endpoint Category                                   | Limit                         |
+| --------------------------------------------------- | ----------------------------- |
+| Auth (register, login, forgot-password, verify-otp) | 10 requests / 15 minutes / IP |
+| Refresh token                                       | 20 requests / 15 minutes / IP |
+| All other endpoints                                 | No rate limit                 |
 
 ---
 

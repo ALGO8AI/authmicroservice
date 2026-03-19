@@ -86,7 +86,7 @@ http://localhost:8080/api/v1
 | Category | Endpoints                                                                                                                   |
 | -------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Auth     | `/users/register`, `/users/login`, `/users/logout`, `/users/refresh-token`, `/users/current-user`, `/users/change-password` |
-| Password | `/users/forgot-password`, `/users/reset-password/:resetToken`                                                               |
+| Password | `/users/forgot-password`, `/users/verify-otp`                                                               |
 | OAuth    | `/auth/google`, `/auth/google/callback`                                                                                     |
 | Users    | `GET /users`, `POST /users`, `PATCH /users/:userId`, `DELETE /users/:userId`                                                |
 | Health   | `/healthcheck`                                                                                                              |

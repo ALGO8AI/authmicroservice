@@ -259,12 +259,35 @@ const COOKIE_OPTIONS = {
 
 - **Access Token**: 15 minutes
 - **Refresh Token**: 7 days
-- **Password Reset Token**: 20 minutes
+- **OTP**: 5 minutes
 - **OAuth State**: Should be validated within minutes
 
 ---
 
-## Password Reset Flow
+## Password Reset Flow (OTP)
+
+### How It Works
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐
+│  User       │     │  Backend     │     │  Email     │     │  Frontend    │
+│  enters     │────▶│  generates   │────▶│  sent with │────▶│  receives    │
+│  email      │     │  OTP         │     │  6-digit   │     │  OTP         │
+└─────────────┘     └──────────────┘     │  OTP       │     └──────────────┘
+                                         └─────────────┘           │
+                                                                   ▼
+                                                          ┌──────────────┐
+                                                          │  User enters │
+                                                          │  OTP & new   │
+                                                          │  password    │
+                                                          └──────────────┘
+                                                                   │
+                                                                   ▼
+                                                          ┌──────────────┐
+                                                          │  Calls reset │
+                                                          │  API         │
+                                                          └──────────────┘
+```
 
 ### 1. Request Reset
 
@@ -275,37 +298,42 @@ Body: { "email": "user@example.com" }
 
 The server:
 
-1. Generates a secure random token
-2. Stores hashed token and expiry in the database
-3. Sends an email with the reset link
+1. Generates a secure random 6-digit OTP
+2. Stores hashed OTP and expiry in the database
+3. Sends an email with the OTP
 
-### 2. Reset Password
+### 2. Verify OTP & Reset Password
 
 ```
-POST /api/v1/users/reset-password/:resetToken
-Body: { "newPassword": "newPassword123" }
+POST /api/v1/users/verify-otp
+Body: {
+  "email": "user@example.com",
+  "inputedOtp": "123456",
+  "newPassword": "newPassword123"
+}
 ```
 
 The server:
 
-1. Verifies the token hasn't expired
+1. Verifies the OTP hasn't expired (5 minutes) and matches the hashed OTP
 2. Hashes the new password
 3. Updates the user's password
 4. **Clears all refresh tokens** (invalidates all sessions)
-5. Sends confirmation email
+5. Clears the OTP data from the database
 
 ### Security Note
 
-When a password is reset, all existing sessions are invalidated:
+When a password is reset, all existing sessions are invalidated and the OTP is cleared:
 
 ```javascript
 // In auth.service.js
-export const resetForgottenPassword = async (resetToken, newPassword) => {
-  // ... verify token ...
+export const verifyUserByOtp = async ({ email, newPassword, inputedOtp }) => {
+  // ... verify OTP ...
 
-  // Clear all refresh tokens (revoke all sessions)
-  user.refreshToken = null;
-  user.password = newHashedPassword;
+  user.password = await generateHashPassword(newPassword);
+  user.otp = null;
+  user.generationTime = null;
+  user.refreshToken = null; // Revoke all existing sessions
   await user.save();
 };
 ```

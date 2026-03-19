@@ -320,10 +320,8 @@ paths:
   /users/forgot-password:
     post:
       tags: [Password]
-      summary: Request a password reset email
-      description: |
-        Sends a password reset link to the provided email address if an account exists.
-        Always returns 200 to prevent user enumeration.
+      summary: Request a password reset OTP
+      description: Sends a 6-digit OTP to the provided email address if an account exists.
       requestBody:
         required: true
         content:
@@ -338,42 +336,42 @@ paths:
                   example: "user@example.com"
       responses:
         "200":
-          description: Password reset email sent
+          description: Password reset OTP sent
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiResponse"
         "400":
-          description: Validation error
+          description: User not found or validation error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
-  /users/reset-password/{resetToken}:
+  /users/verify-otp:
     post:
       tags: [Password]
-      summary: Reset forgotten password
-      description: Resets the user password using the one-time token from the email. Token expires quickly.
-      parameters:
-        - name: resetToken
-          in: path
-          required: true
-          schema:
-            type: string
-          description: One-time reset token received in the password reset email
+      summary: Verify OTP and reset password
+      description: Resets the user password using the 6-digit OTP sent to their email. OTP expires in 5 minutes.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [newPassword]
+              required: [email, newPassword, inputedOtp]
               properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
                 newPassword:
                   type: string
                   minLength: 8
                   example: "newSecurePassword123"
+                inputedOtp:
+                  type: string
+                  example: "123456"
       responses:
         "200":
           description: Password reset successfully
@@ -382,7 +380,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiResponse"
         "400":
-          description: Token expired or invalid
+          description: OTP expired or invalid
           content:
             application/json:
               schema:

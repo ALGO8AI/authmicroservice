@@ -4,14 +4,11 @@ import bcrypt from "bcrypt";
 import { ApiError } from "../utils/ApiError.js";
 import { UserRolesEnum } from "../constants.js";
 import userQueries, { EXCLUDED_FIELDS } from "../queries/auth.queries.js";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  generateTemporaryToken,
-} from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 import { generateHashPassword, isPasswordCorrect } from "../utils/password.js";
 import logger from "../logger/winston.logger.js";
-import { forgotPasswordMailgenContent, sendEmail } from "../utils/mail.js";
+import { forgotPasswordOtpMailgenContent, sendEmail } from "../utils/mail.js";
+import { generateOtp, verifyOtp } from "../utils/otp.js";
 
 // Sequelize options object — reused wherever a query must exclude sensitive fields.
 const SAFE_ATTRS = { attributes: { exclude: EXCLUDED_FIELDS } };
@@ -20,6 +17,9 @@ const SAFE_ATTRS = { attributes: { exclude: EXCLUDED_FIELDS } };
 // not found. Generated synchronously at module load to ensure it's ready before
 // any login attempts.
 const DUMMY_HASH = bcrypt.hashSync("__timing_mitigation_placeholder__", 10);
+
+const MAX_OTP_ATTEMPTS = 5;
+const OTP_LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
 const generateAccessAndRefreshTokens = async (userId) => {
   const user = await userQueries.findOne({ where: { userId } });
@@ -137,63 +137,88 @@ export const refreshAccessToken = async (incomingRefreshToken) => {
 export const forgotPasswordRequest = async (email) => {
   const user = await userQueries.findOne({ where: { email } });
 
-  // Anti-user enumeration: always return success
   if (!user) {
-    return;
+    throw new ApiError(400, "User not found.");
   }
 
-  const { unHashedToken, hashedToken, tokenExpiry } =
-    await generateTemporaryToken();
-
-  user.forgotPasswordToken = hashedToken;
-  user.forgotPasswordExpiry = tokenExpiry;
-  await user.save();
+  const { otp, hashedOtp, generationTime } = await generateOtp();
 
   const userName = user.firstName || "User";
   const emailResult = await sendEmail(
     [user.email],
-    "Password reset request",
-    forgotPasswordMailgenContent(
-      userName,
-      `${process.env.RESET_PASSWORD_REDIRECT_URL}/${unHashedToken}`,
-    ),
+    "Password change request",
+    forgotPasswordOtpMailgenContent(userName, otp),
   );
 
-  if (!emailResult.flag) {
-    logger.error("Failed to send password reset email", {
-      email: user.email,
-      error: emailResult.error?.message,
-    });
+  if (emailResult.flag) {
+    user.otp = hashedOtp;
+    user.generationTime = generationTime;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
+    await user.save();
+    return true;
   }
-};
 
-export const resetForgottenPassword = async ({ resetToken, newPassword }) => {
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  const user = await userQueries.findOne({
-    where: { forgotPasswordToken: hashedToken },
+  logger.error("Failed to send password reset email", {
+    userId: user.userId,
+    error: emailResult.error?.message,
+    code: emailResult.error?.code,
   });
 
+  throw new ApiError(400, "Error in sending otp, try again later.");
+};
+
+export const verifyUserByOtp = async ({ email, newPassword, inputedOtp }) => {
+  const user = await userQueries.findOne({ where: { email } });
+
   if (!user) {
-    throw new ApiError(400, "Token is invalid or expired");
+    throw new ApiError(400, "User not found.");
   }
 
-  if (
-    user.forgotPasswordExpiry &&
-    new Date(user.forgotPasswordExpiry) < new Date()
-  ) {
-    throw new ApiError(400, "Token is invalid or expired");
+  if (!user.otp || !user.generationTime) {
+    throw new ApiError(400, "OTP is invalid or expired.");
   }
 
-  user.forgotPasswordToken = null;
-  user.forgotPasswordExpiry = null;
-  user.password = await generateHashPassword(newPassword);
-  // Revoke all existing sessions by clearing the refresh token
-  user.refreshToken = null;
+  // Check if account is locked
+  if (user.otpLockedUntil && new Date() < new Date(user.otpLockedUntil)) {
+    throw new ApiError(
+      400,
+      "Too many failed attempts. Please try again later.",
+    );
+  }
+
+  const isOtpValid = await verifyOtp(
+    { hashedOtp: user.otp, generationTime: user.generationTime },
+    inputedOtp,
+  );
+
+  if (isOtpValid) {
+    user.password = await generateHashPassword(newPassword);
+    user.otp = null;
+    user.generationTime = null;
+    user.otpAttempts = 0;
+    user.otpLockedUntil = null;
+    user.refreshToken = null;
+    await user.save();
+    return true;
+  }
+
+  // Increment failed attempts
+  user.otpAttempts = (user.otpAttempts || 0) + 1;
+
+  if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
+    user.otpLockedUntil = new Date(Date.now() + OTP_LOCKOUT_DURATION);
+    user.otp = null;
+    user.generationTime = null;
+    await user.save();
+    throw new ApiError(
+      400,
+      "Too many failed attempts. Please try again later.",
+    );
+  }
+
   await user.save();
+  throw new ApiError(400, "OTP is invalid or expired.");
 };
 
 export const changeCurrentPassword = async ({
