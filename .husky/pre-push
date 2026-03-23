@@ -1,0 +1,2 @@
+# Stronger gate before push: verify the full unit suite.
+npm run test:unit

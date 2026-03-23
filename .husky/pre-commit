@@ -1,0 +1,2 @@
+# Fast local gate before commit: keep lint failures out of history.
+npm run lint:all

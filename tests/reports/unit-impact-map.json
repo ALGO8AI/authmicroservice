@@ -1,0 +1,636 @@
+{
+  "generatedAt": "2026-03-23T16:33:54.783Z",
+  "includedModules": [
+    {
+      "module": "src/controllers/auth.controller.js",
+      "exports": [
+        "registerUser",
+        "loginUser",
+        "logoutUser",
+        "refreshAccessToken",
+        "forgotPasswordRequest",
+        "verifyUserByOtp",
+        "changeCurrentPassword",
+        "getCurrentUser",
+        "addNewUser",
+        "editUserDetails",
+        "deleteUser",
+        "getAllUsers"
+      ],
+      "dependencies": [
+        "src/services/auth.service.js",
+        "src/utils/ApiError.js",
+        "src/utils/ApiResponse.js",
+        "src/utils/asyncHandler.js"
+      ]
+    },
+    {
+      "module": "src/controllers/healthcheck.controller.js",
+      "exports": [
+        "healthcheck"
+      ],
+      "dependencies": [
+        "module",
+        "src/config/db.js",
+        "src/utils/ApiResponse.js",
+        "src/utils/asyncHandler.js"
+      ]
+    },
+    {
+      "module": "src/controllers/oauth.controller.js",
+      "exports": [
+        "googleRedirect",
+        "googleCallback",
+        "googleFailed",
+        "googleSuccess"
+      ],
+      "dependencies": [
+        "crypto",
+        "src/services/auth.service.js",
+        "src/utils/ApiError.js",
+        "src/utils/ApiResponse.js",
+        "src/utils/asyncHandler.js"
+      ]
+    },
+    {
+      "module": "src/controllers/upload.controller.js",
+      "exports": [
+        "uploadFile"
+      ],
+      "dependencies": [
+        "src/logger/winston.logger.js",
+        "src/utils/ApiError.js",
+        "src/utils/ApiResponse.js"
+      ]
+    },
+    {
+      "module": "src/services/auth.service.js",
+      "exports": [
+        "registerUser",
+        "loginUser",
+        "logoutUser",
+        "refreshAccessToken",
+        "forgotPasswordRequest",
+        "verifyUserByOtp",
+        "changeCurrentPassword",
+        "addNewUser",
+        "editUserDetails",
+        "deleteUser",
+        "findOrCreateGoogleUser",
+        "getAllUsers"
+      ],
+      "dependencies": [
+        "bcrypt",
+        "crypto",
+        "jsonwebtoken",
+        "src/constants.js",
+        "src/logger/winston.logger.js",
+        "src/queries/auth.queries.js",
+        "src/utils/ApiError.js",
+        "src/utils/jwt.js",
+        "src/utils/mail.js",
+        "src/utils/otp.js",
+        "src/utils/password.js"
+      ]
+    },
+    {
+      "module": "src/utils/ApiError.js",
+      "exports": [
+        "ApiError"
+      ],
+      "dependencies": []
+    },
+    {
+      "module": "src/utils/ApiResponse.js",
+      "exports": [
+        "ApiResponse"
+      ],
+      "dependencies": []
+    },
+    {
+      "module": "src/utils/asyncHandler.js",
+      "exports": [
+        "asyncHandler"
+      ],
+      "dependencies": []
+    },
+    {
+      "module": "src/utils/jwt.js",
+      "exports": [
+        "generateAccessToken",
+        "generateRefreshToken",
+        "generateTemporaryToken"
+      ],
+      "dependencies": [
+        "jsonwebtoken"
+      ]
+    },
+    {
+      "module": "src/utils/mail.js",
+      "exports": [
+        "forgotPasswordOtpMailgenContent",
+        "newUserRegisterMailgen",
+        "sendEmail"
+      ],
+      "dependencies": [
+        "fs",
+        "mailgen",
+        "nodemailer",
+        "path",
+        "src/logger/winston.logger.js"
+      ]
+    },
+    {
+      "module": "src/utils/otp.js",
+      "exports": [
+        "generateOtp",
+        "verifyOtp"
+      ],
+      "dependencies": [
+        "bcrypt",
+        "crypto"
+      ]
+    },
+    {
+      "module": "src/utils/password.js",
+      "exports": [
+        "generateHashPassword",
+        "isPasswordCorrect"
+      ],
+      "dependencies": [
+        "bcrypt"
+      ]
+    },
+    {
+      "module": "src/validators/auth.validators.js",
+      "exports": [
+        "userRegisterValidator",
+        "userLoginValidator",
+        "userChangeCurrentPasswordValidator",
+        "userForgotPasswordValidator",
+        "verifyUserByOtpValidator",
+        "userAssignRoleValidator",
+        "userRefreshTokenValidator",
+        "addNewUserValidator",
+        "userIdParamValidator"
+      ],
+      "dependencies": [
+        "express-validator",
+        "src/constants.js"
+      ]
+    },
+    {
+      "module": "src/validators/validate.js",
+      "exports": [
+        "validate"
+      ],
+      "dependencies": [
+        "express-validator",
+        "src/utils/ApiError.js"
+      ]
+    },
+    {
+      "module": "src/middlewares/auth.middlewares.js",
+      "exports": [
+        "verifyJWT",
+        "verifyPermission"
+      ],
+      "dependencies": [
+        "jsonwebtoken",
+        "src/queries/auth.queries.js",
+        "src/utils/ApiError.js"
+      ]
+    },
+    {
+      "module": "src/middlewares/error.middlewares.js",
+      "exports": [
+        "errorHandler"
+      ],
+      "dependencies": [
+        "sequelize",
+        "src/logger/winston.logger.js",
+        "src/utils/ApiError.js"
+      ]
+    },
+    {
+      "module": "src/middlewares/requestId.middleware.js",
+      "exports": [
+        "requestId"
+      ],
+      "dependencies": [
+        "crypto"
+      ]
+    }
+  ],
+  "dependencyImpact": [
+    {
+      "dependency": "bcrypt",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/utils/otp.js#generateOtp",
+        "src/utils/otp.js#verifyOtp",
+        "src/utils/password.js#generateHashPassword",
+        "src/utils/password.js#isPasswordCorrect"
+      ]
+    },
+    {
+      "dependency": "crypto",
+      "affectedFunctions": [
+        "src/controllers/oauth.controller.js#googleCallback",
+        "src/controllers/oauth.controller.js#googleFailed",
+        "src/controllers/oauth.controller.js#googleRedirect",
+        "src/controllers/oauth.controller.js#googleSuccess",
+        "src/middlewares/requestId.middleware.js#requestId",
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/utils/otp.js#generateOtp",
+        "src/utils/otp.js#verifyOtp"
+      ]
+    },
+    {
+      "dependency": "express-validator",
+      "affectedFunctions": [
+        "src/validators/auth.validators.js#addNewUserValidator",
+        "src/validators/auth.validators.js#userAssignRoleValidator",
+        "src/validators/auth.validators.js#userChangeCurrentPasswordValidator",
+        "src/validators/auth.validators.js#userForgotPasswordValidator",
+        "src/validators/auth.validators.js#userIdParamValidator",
+        "src/validators/auth.validators.js#userLoginValidator",
+        "src/validators/auth.validators.js#userRefreshTokenValidator",
+        "src/validators/auth.validators.js#userRegisterValidator",
+        "src/validators/auth.validators.js#verifyUserByOtpValidator",
+        "src/validators/validate.js#validate"
+      ]
+    },
+    {
+      "dependency": "fs",
+      "affectedFunctions": [
+        "src/utils/mail.js#forgotPasswordOtpMailgenContent",
+        "src/utils/mail.js#newUserRegisterMailgen",
+        "src/utils/mail.js#sendEmail"
+      ]
+    },
+    {
+      "dependency": "jsonwebtoken",
+      "affectedFunctions": [
+        "src/middlewares/auth.middlewares.js#verifyJWT",
+        "src/middlewares/auth.middlewares.js#verifyPermission",
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/utils/jwt.js#generateAccessToken",
+        "src/utils/jwt.js#generateRefreshToken",
+        "src/utils/jwt.js#generateTemporaryToken"
+      ]
+    },
+    {
+      "dependency": "mailgen",
+      "affectedFunctions": [
+        "src/utils/mail.js#forgotPasswordOtpMailgenContent",
+        "src/utils/mail.js#newUserRegisterMailgen",
+        "src/utils/mail.js#sendEmail"
+      ]
+    },
+    {
+      "dependency": "module",
+      "affectedFunctions": [
+        "src/controllers/healthcheck.controller.js#healthcheck"
+      ]
+    },
+    {
+      "dependency": "nodemailer",
+      "affectedFunctions": [
+        "src/utils/mail.js#forgotPasswordOtpMailgenContent",
+        "src/utils/mail.js#newUserRegisterMailgen",
+        "src/utils/mail.js#sendEmail"
+      ]
+    },
+    {
+      "dependency": "path",
+      "affectedFunctions": [
+        "src/utils/mail.js#forgotPasswordOtpMailgenContent",
+        "src/utils/mail.js#newUserRegisterMailgen",
+        "src/utils/mail.js#sendEmail"
+      ]
+    },
+    {
+      "dependency": "sequelize",
+      "affectedFunctions": [
+        "src/middlewares/error.middlewares.js#errorHandler"
+      ]
+    },
+    {
+      "dependency": "src/config/db.js",
+      "affectedFunctions": [
+        "src/controllers/healthcheck.controller.js#healthcheck"
+      ]
+    },
+    {
+      "dependency": "src/constants.js",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/validators/auth.validators.js#addNewUserValidator",
+        "src/validators/auth.validators.js#userAssignRoleValidator",
+        "src/validators/auth.validators.js#userChangeCurrentPasswordValidator",
+        "src/validators/auth.validators.js#userForgotPasswordValidator",
+        "src/validators/auth.validators.js#userIdParamValidator",
+        "src/validators/auth.validators.js#userLoginValidator",
+        "src/validators/auth.validators.js#userRefreshTokenValidator",
+        "src/validators/auth.validators.js#userRegisterValidator",
+        "src/validators/auth.validators.js#verifyUserByOtpValidator"
+      ]
+    },
+    {
+      "dependency": "src/logger/winston.logger.js",
+      "affectedFunctions": [
+        "src/controllers/upload.controller.js#uploadFile",
+        "src/middlewares/error.middlewares.js#errorHandler",
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/utils/mail.js#forgotPasswordOtpMailgenContent",
+        "src/utils/mail.js#newUserRegisterMailgen",
+        "src/utils/mail.js#sendEmail"
+      ]
+    },
+    {
+      "dependency": "src/queries/auth.queries.js",
+      "affectedFunctions": [
+        "src/middlewares/auth.middlewares.js#verifyJWT",
+        "src/middlewares/auth.middlewares.js#verifyPermission",
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp"
+      ]
+    },
+    {
+      "dependency": "src/services/auth.service.js",
+      "affectedFunctions": [
+        "src/controllers/auth.controller.js#addNewUser",
+        "src/controllers/auth.controller.js#changeCurrentPassword",
+        "src/controllers/auth.controller.js#deleteUser",
+        "src/controllers/auth.controller.js#editUserDetails",
+        "src/controllers/auth.controller.js#forgotPasswordRequest",
+        "src/controllers/auth.controller.js#getAllUsers",
+        "src/controllers/auth.controller.js#getCurrentUser",
+        "src/controllers/auth.controller.js#loginUser",
+        "src/controllers/auth.controller.js#logoutUser",
+        "src/controllers/auth.controller.js#refreshAccessToken",
+        "src/controllers/auth.controller.js#registerUser",
+        "src/controllers/auth.controller.js#verifyUserByOtp",
+        "src/controllers/oauth.controller.js#googleCallback",
+        "src/controllers/oauth.controller.js#googleFailed",
+        "src/controllers/oauth.controller.js#googleRedirect",
+        "src/controllers/oauth.controller.js#googleSuccess"
+      ]
+    },
+    {
+      "dependency": "src/utils/ApiError.js",
+      "affectedFunctions": [
+        "src/controllers/auth.controller.js#addNewUser",
+        "src/controllers/auth.controller.js#changeCurrentPassword",
+        "src/controllers/auth.controller.js#deleteUser",
+        "src/controllers/auth.controller.js#editUserDetails",
+        "src/controllers/auth.controller.js#forgotPasswordRequest",
+        "src/controllers/auth.controller.js#getAllUsers",
+        "src/controllers/auth.controller.js#getCurrentUser",
+        "src/controllers/auth.controller.js#loginUser",
+        "src/controllers/auth.controller.js#logoutUser",
+        "src/controllers/auth.controller.js#refreshAccessToken",
+        "src/controllers/auth.controller.js#registerUser",
+        "src/controllers/auth.controller.js#verifyUserByOtp",
+        "src/controllers/oauth.controller.js#googleCallback",
+        "src/controllers/oauth.controller.js#googleFailed",
+        "src/controllers/oauth.controller.js#googleRedirect",
+        "src/controllers/oauth.controller.js#googleSuccess",
+        "src/controllers/upload.controller.js#uploadFile",
+        "src/middlewares/auth.middlewares.js#verifyJWT",
+        "src/middlewares/auth.middlewares.js#verifyPermission",
+        "src/middlewares/error.middlewares.js#errorHandler",
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp",
+        "src/validators/validate.js#validate"
+      ]
+    },
+    {
+      "dependency": "src/utils/ApiResponse.js",
+      "affectedFunctions": [
+        "src/controllers/auth.controller.js#addNewUser",
+        "src/controllers/auth.controller.js#changeCurrentPassword",
+        "src/controllers/auth.controller.js#deleteUser",
+        "src/controllers/auth.controller.js#editUserDetails",
+        "src/controllers/auth.controller.js#forgotPasswordRequest",
+        "src/controllers/auth.controller.js#getAllUsers",
+        "src/controllers/auth.controller.js#getCurrentUser",
+        "src/controllers/auth.controller.js#loginUser",
+        "src/controllers/auth.controller.js#logoutUser",
+        "src/controllers/auth.controller.js#refreshAccessToken",
+        "src/controllers/auth.controller.js#registerUser",
+        "src/controllers/auth.controller.js#verifyUserByOtp",
+        "src/controllers/healthcheck.controller.js#healthcheck",
+        "src/controllers/oauth.controller.js#googleCallback",
+        "src/controllers/oauth.controller.js#googleFailed",
+        "src/controllers/oauth.controller.js#googleRedirect",
+        "src/controllers/oauth.controller.js#googleSuccess",
+        "src/controllers/upload.controller.js#uploadFile"
+      ]
+    },
+    {
+      "dependency": "src/utils/asyncHandler.js",
+      "affectedFunctions": [
+        "src/controllers/auth.controller.js#addNewUser",
+        "src/controllers/auth.controller.js#changeCurrentPassword",
+        "src/controllers/auth.controller.js#deleteUser",
+        "src/controllers/auth.controller.js#editUserDetails",
+        "src/controllers/auth.controller.js#forgotPasswordRequest",
+        "src/controllers/auth.controller.js#getAllUsers",
+        "src/controllers/auth.controller.js#getCurrentUser",
+        "src/controllers/auth.controller.js#loginUser",
+        "src/controllers/auth.controller.js#logoutUser",
+        "src/controllers/auth.controller.js#refreshAccessToken",
+        "src/controllers/auth.controller.js#registerUser",
+        "src/controllers/auth.controller.js#verifyUserByOtp",
+        "src/controllers/healthcheck.controller.js#healthcheck",
+        "src/controllers/oauth.controller.js#googleCallback",
+        "src/controllers/oauth.controller.js#googleFailed",
+        "src/controllers/oauth.controller.js#googleRedirect",
+        "src/controllers/oauth.controller.js#googleSuccess"
+      ]
+    },
+    {
+      "dependency": "src/utils/jwt.js",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp"
+      ]
+    },
+    {
+      "dependency": "src/utils/mail.js",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp"
+      ]
+    },
+    {
+      "dependency": "src/utils/otp.js",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp"
+      ]
+    },
+    {
+      "dependency": "src/utils/password.js",
+      "affectedFunctions": [
+        "src/services/auth.service.js#addNewUser",
+        "src/services/auth.service.js#changeCurrentPassword",
+        "src/services/auth.service.js#deleteUser",
+        "src/services/auth.service.js#editUserDetails",
+        "src/services/auth.service.js#findOrCreateGoogleUser",
+        "src/services/auth.service.js#forgotPasswordRequest",
+        "src/services/auth.service.js#getAllUsers",
+        "src/services/auth.service.js#loginUser",
+        "src/services/auth.service.js#logoutUser",
+        "src/services/auth.service.js#refreshAccessToken",
+        "src/services/auth.service.js#registerUser",
+        "src/services/auth.service.js#verifyUserByOtp"
+      ]
+    }
+  ],
+  "excludedModules": [
+    {
+      "module": "src/app.js",
+      "reason": "Application bootstrap and framework wiring only."
+    },
+    {
+      "module": "src/index.js",
+      "reason": "Process entrypoint only."
+    },
+    {
+      "module": "src/config/db.js",
+      "reason": "Real database bootstrap; excluded from unit scope."
+    },
+    {
+      "module": "src/routes/*.js",
+      "reason": "Route registration only; HTTP route tests are explicitly out of scope."
+    },
+    {
+      "module": "src/models/**/*.js",
+      "reason": "ORM models are persistence definitions, not unit-level business logic here."
+    },
+    {
+      "module": "src/queries/auth.queries.js",
+      "reason": "Thin ORM wrapper around Sequelize model calls; treated as downstream dependency."
+    },
+    {
+      "module": "src/logger/*.js",
+      "reason": "Logging infrastructure only."
+    },
+    {
+      "module": "src/middlewares/upload.middleware.js",
+      "reason": "Multer wiring/infrastructure; minimal repo-specific value compared with business-logic modules."
+    },
+    {
+      "module": "src/constants.js",
+      "reason": "Static constants only."
+    }
+  ]
+}

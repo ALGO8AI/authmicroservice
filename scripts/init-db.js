@@ -1,11 +1,11 @@
 import "dotenv/config";
 import mysql from "mysql2/promise";
 import sequelize from "../src/config/db.js";
-import PlatformUsers from "../src/models/auth/PlatformUsers.model.js";
+import "../src/models/auth/PlatformUsers.model.js";
 import Roles from "../src/models/auth/Roles.model.js";
-import Permissions from "../src/models/auth/Permissions.model.js";
-import Features from "../src/models/auth/Features.model.js";
-import RoleFeatures from "../src/models/auth/RoleFeatures.model.js";
+import "../src/models/auth/Permissions.model.js";
+import "../src/models/auth/Features.model.js";
+import "../src/models/auth/RoleFeatures.model.js";
 import logger from "../src/logger/winston.logger.js";
 
 async function createDatabaseIfNotExists() {
