@@ -1,38 +1,30 @@
-const userQueries = require("../queries/apps/auth/auth.queries.js");
-const { ApiError } = require("../utils/ApiError.js");
-const jwt = require("jsonwebtoken");
+import userQueries, { EXCLUDED_FIELDS } from "../queries/auth.queries.js";
+import { ApiError } from "../utils/ApiError.js";
+import jwt from "jsonwebtoken";
 
-module.exports.verifyJWT = async (req, res, next) => {
+export const verifyJWT = async (req, res, next) => {
+  try {
     const token =
-        req.cookies?.accessToken ||
-        req.header("Authorization")?.replace("Bearer ", "");
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
 
     if (!token) {
-        throw new ApiError(401, "Unauthorized request");
+      throw new ApiError(401, "Unauthorized request");
     }
 
-    try {
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-        const user = await userQueries.findById(decodedToken?.userId, {
-            attributes: {
-                exclude: [
-                    "password",
-                    "pin",
-                    "refreshToken",
-                    "forgotPasswordToken",
-                    "forgotPasswordExpiry",
-                ],
-            },
-        });
-        if (!user) {
-            throw new ApiError(401, "Invalid access token");
-        }
-        req.user = user.toJSON();
-        next();
-    } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid access token");
+    const user = await userQueries.findById(decodedToken?.userId, {
+      attributes: { exclude: EXCLUDED_FIELDS },
+    });
+    if (!user) {
+      throw new ApiError(401, "Invalid access token");
     }
+    req.user = user.toJSON();
+    next();
+  } catch (error) {
+    next(new ApiError(401, error?.message || "Invalid access token"));
+  }
 };
 
 /**
@@ -41,18 +33,19 @@ module.exports.verifyJWT = async (req, res, next) => {
  * * This middleware is responsible for validating multiple user role permissions at a time.
  * * So, in future if we have a route which can be accessible by multiple roles, we can achieve that with this middleware
  */
-module.exports.verifyPermission =
-    (roles = []) =>
-    async (req, res, next) => {
-        if (!req.user?._id) {
-            throw new ApiError(401, "Unauthorized request");
-        }
-        if (roles.includes(req.user?.role)) {
-            next();
-        } else {
-            throw new ApiError(
-                403,
-                "You are not allowed to perform this action"
-            );
-        }
-    };
+export const verifyPermission =
+  (roles = []) =>
+  async (req, res, next) => {
+    try {
+      if (!req.user?.userId) {
+        throw new ApiError(401, "Unauthorized request");
+      }
+      if (roles.includes(req.user?.roleId)) {
+        next();
+      } else {
+        throw new ApiError(403, "You are not allowed to perform this action");
+      }
+    } catch (error) {
+      next(error);
+    }
+  };

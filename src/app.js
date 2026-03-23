@@ -1,98 +1,122 @@
-const cors = require("cors");
-const express = require("express");
-const session = require("express-session");
-const { createServer } = require("http");
-const morganMiddleware = require("./logger/morgan.logger");
-const passport = require("passport");
-const { rateLimit } = require("express-rate-limit");
-const { ApiError } = require("./utils/ApiError.js");
-const { ApiResponse } = require("./utils/ApiResponse.js");
-const path = require("path");
-const fs = require("fs")
+import cors from "cors";
+import express from "express";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import helmet from "helmet";
+import { createServer } from "http";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import path from "path";
+import fs from "fs";
+import morganMiddleware from "./logger/morgan.logger.js";
+import { requestId } from "./middlewares/requestId.middleware.js";
+import { rateLimit } from "express-rate-limit";
+import { ApiError } from "./utils/ApiError.js";
 
-require('dotenv').config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 
 const httpServer = createServer(app);
 
 app.use(
-    cors({
-        origin:
-            process.env.CORS_ORIGIN === "*"
-                ? "*"
-                : process.env.CORS_ORIGIN?.split(","),
-        credentials: true,
-    })
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://cdnjs.cloudflare.com",
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https://validator.swagger.io"],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+      },
+    },
+  }),
 );
 
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 5000,
-    standardHeaders: true,
-    legacyHeaders: false,
-    keyGenerator: (req, res) => {
-        return req.ip;
-    },
-    handler: (_, __, ___, options) => {
-        throw new ApiError(
-            options.statusCode || 500,
-            `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`
-        );
-    },
+app.use(cookieParser());
+
+app.use(
+  cors({
+    origin:
+      process.env.CORS_ORIGIN === "*"
+        ? "*"
+        : process.env.CORS_ORIGIN?.split(","),
+    credentials: true,
+  }),
+);
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip;
+  },
+  handler: (_, __, ___, options) => {
+    throw new ApiError(
+      options.statusCode || 500,
+      `There are too many requests. You are only allowed ${options.max} requests per ${options.windowMs / 60000} minutes`,
+    );
+  },
 });
 
-app.use(limiter);
+app.use(globalLimiter);
 
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET,
-        resave: false,
-        saveUninitialized: true,
-        cookie: { secure: false }, // Set secure: true if using HTTPS
-    })
-);
+const isProduction = process.env.NODE_ENV === "production";
 
-
-const UPLOAD_PATH = path.resolve(__dirname, '../uploads');
-if (!fs.existsSync(UPLOAD_PATH)) {
-    fs.mkdirSync(UPLOAD_PATH, { recursive: true });
+if (!process.env.SESSION_SECRET) {
+  throw new Error(
+    "SESSION_SECRET environment variable is required but not set.",
+  );
 }
 
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: isProduction,
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    },
+  }),
+);
 
+const UPLOAD_PATH = path.resolve(__dirname, "../uploads");
+if (!fs.existsSync(UPLOAD_PATH)) {
+  fs.mkdirSync(UPLOAD_PATH, { recursive: true });
+}
 
+app.use(requestId);
 app.use(morganMiddleware);
 
-// App routes
-const { errorHandler } = require("./middlewares/error.middlewares.js");
-const healthcheckRouter = require("./routes/healthcheck.routes.js");
+// Central router
+import { errorHandler } from "./middlewares/error.middlewares.js";
+import apiRouter from "./routes/index.js";
 
-const userRouter = require("./routes/apps/auth/user.routes.js");
-const uploadRouter = require("./routes/apps/general/upload.routes.js")
-// * Kitchen sink routes
-const statuscodeRouter = require("./routes/kitchen-sink/statuscode.routes.js");
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
 
-// * SWAGGER DOCS
-const swaggerUi = require("swagger-ui-express");
-const swaggerFile = require("../swagger-output.json");
+const swaggerDocument = YAML.load(path.resolve(__dirname, "../swagger.yaml"));
 
-// * healthcheck
-app.use("/api/v1/healthcheck", healthcheckRouter);
+app.use("/api/v1", apiRouter);
 
-// * User APIs
-app.use("/api/v1/users", userRouter);
-
-app.use("/api/v1/documents", uploadRouter);
-
-// * API Documentation
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
-
-// * Kitchen sink apis
-app.use("/api/v1/kitchen-sink/status-codes", statuscodeRouter);
+// API Documentation — served from swagger.yaml
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(errorHandler);
 
-module.exports = { httpServer };
+export { httpServer };
