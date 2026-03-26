@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "prepare": "husky",
+    "prepare": "command -v husky >/dev/null 2>&1 && husky || true",
     "test": "npm run test:unit",
     "lint": "eslint src/",
     "lint:all": "eslint src test scripts eslint.config.js jest.unit.config.js",
