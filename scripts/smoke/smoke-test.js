@@ -26,8 +26,8 @@ function joinUrl(baseUrl, endpointPath) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const baseUrl = args.url ?? process.env.SMOKE_BASE_URL;
-  const healthPath = args.path ?? process.env.SMOKE_HEALTH_PATH ?? DEFAULT_PATH;
+  const baseUrl = args.url ?? process.env.DEPLOY_SMOKE_URL;
+  const healthPath = args.path ?? process.env.DEPLOY_SMOKE_PATH ?? DEFAULT_PATH;
   const timeoutMs = Number(
     args.timeout ?? process.env.SMOKE_TIMEOUT_MS ?? DEFAULT_TIMEOUT_MS,
   );
