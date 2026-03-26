@@ -175,6 +175,8 @@ jobs:
       - deploy
     if: needs.resolve-environment.outputs.deployment_environment != ''
     runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-environment.outputs.deployment_environment }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -185,4 +187,7 @@ jobs:
           node-version: 20
 
       - name: Run smoke test
-        run: node ./scripts/smoke/smoke-test.js --url=${{ vars.DEPLOY_SMOKE_URL }} --path=${{ vars.DEPLOY_SMOKE_PATH || '/api/v1/healthcheck' }}
+        env:
+          DEPLOY_SMOKE_URL: ${{ vars.DEPLOY_SMOKE_URL }}
+          DEPLOY_SMOKE_PATH: ${{ vars.DEPLOY_SMOKE_PATH }}
+        run: node ./scripts/smoke/smoke-test.js
