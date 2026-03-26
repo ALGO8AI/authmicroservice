@@ -1,0 +1,17 @@
+services:
+  auth-microservice:
+    image: ${AUTH_IMAGE:?AUTH_IMAGE is required}
+    container_name: ${CONTAINER_NAME:-auth-microservice}
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    env_file:
+      - ${APP_ENV_FILE:?APP_ENV_FILE is required}
+    environment:
+      NODE_ENV: ${APP_NODE_ENV:-production}
+      PORT: 8080
+    volumes:
+      - auth_uploads:/app/uploads
+
+volumes:
+  auth_uploads:

@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./config/load-env.js";
 import { httpServer } from "./app.js";
 import { initDatabase } from "./config/db.js";
 import sequelize from "./config/db.js";

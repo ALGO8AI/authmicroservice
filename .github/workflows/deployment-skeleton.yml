@@ -1,0 +1,190 @@
+name: Docker Deployment
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+      - production
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  resolve-environment:
+    name: resolve-environment
+    runs-on: ubuntu-latest
+    outputs:
+      deployment_environment: ${{ steps.resolve.outputs.deployment_environment }}
+      image_channel_tag: ${{ steps.resolve.outputs.image_channel_tag }}
+      app_node_env: ${{ steps.resolve.outputs.app_node_env }}
+    steps:
+      - name: Resolve target environment
+        id: resolve
+        shell: bash
+        run: |
+          case "${GITHUB_REF}" in
+            refs/heads/develop)
+              echo "deployment_environment=development" >> "$GITHUB_OUTPUT"
+              echo "image_channel_tag=develop-latest" >> "$GITHUB_OUTPUT"
+              echo "app_node_env=development" >> "$GITHUB_OUTPUT"
+              ;;
+            refs/heads/main|refs/heads/production)
+              echo "deployment_environment=production" >> "$GITHUB_OUTPUT"
+              echo "image_channel_tag=production-latest" >> "$GITHUB_OUTPUT"
+              echo "app_node_env=production" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "deployment_environment=" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+  pre-deploy-checks:
+    name: pre-deploy-checks
+    needs: resolve-environment
+    if: needs.resolve-environment.outputs.deployment_environment != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run ci:lint
+
+      - name: Run unit tests with coverage
+        run: npm run ci:test:unit
+
+  build-and-publish-image:
+    name: build-and-publish-image
+    needs:
+      - resolve-environment
+      - pre-deploy-checks
+    if: needs.resolve-environment.outputs.deployment_environment != ''
+    runs-on: ubuntu-latest
+    outputs:
+      image_ref: ${{ steps.meta.outputs.image_ref }}
+      image_channel_ref: ${{ steps.meta.outputs.image_channel_ref }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set image references
+        id: meta
+        shell: bash
+        run: |
+          IMAGE_REPO="ghcr.io/${GITHUB_REPOSITORY,,}"
+          IMAGE_REF="${IMAGE_REPO}:${GITHUB_SHA}"
+          IMAGE_CHANNEL_REF="${IMAGE_REPO}:${{ needs.resolve-environment.outputs.image_channel_tag }}"
+          echo "image_ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+          echo "image_channel_ref=${IMAGE_CHANNEL_REF}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image_ref }}
+            ${{ steps.meta.outputs.image_channel_ref }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: deploy
+    needs:
+      - resolve-environment
+      - build-and-publish-image
+    if: needs.resolve-environment.outputs.deployment_environment != ''
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-environment.outputs.deployment_environment }}
+    concurrency:
+      group: docker-deploy-${{ needs.resolve-environment.outputs.deployment_environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy compose file to host
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: docker-compose.deploy.yml
+          target: ${{ vars.DEPLOY_WORKDIR }}
+          overwrite: true
+
+      - name: Roll out Docker Compose stack
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEPLOY_WORKDIR: ${{ vars.DEPLOY_WORKDIR }}
+          IMAGE_REF: ${{ needs.build-and-publish-image.outputs.image_ref }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+          APP_ENV_FILE: ${{ vars.APP_ENV_FILE }}
+          CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
+          HOST_PORT: ${{ vars.HOST_PORT }}
+          APP_NODE_ENV: ${{ needs.resolve-environment.outputs.app_node_env }}
+          DEPLOY_RUN_INIT_DB: ${{ vars.DEPLOY_RUN_INIT_DB }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          envs: DEPLOY_WORKDIR,IMAGE_REF,REGISTRY_USERNAME,REGISTRY_PASSWORD,APP_ENV_FILE,CONTAINER_NAME,HOST_PORT,APP_NODE_ENV,DEPLOY_RUN_INIT_DB
+          script_stop: true
+          script: |
+            set -e
+            mkdir -p "$DEPLOY_WORKDIR"
+            cat > "$DEPLOY_WORKDIR/.deploy.env" <<EOF
+            AUTH_IMAGE=$IMAGE_REF
+            APP_ENV_FILE=$APP_ENV_FILE
+            CONTAINER_NAME=${CONTAINER_NAME:-auth-microservice}
+            HOST_PORT=${HOST_PORT:-8080}
+            APP_NODE_ENV=$APP_NODE_ENV
+            EOF
+            echo "$REGISTRY_PASSWORD" | docker login ghcr.io -u "$REGISTRY_USERNAME" --password-stdin
+            if [ "$DEPLOY_RUN_INIT_DB" = "true" ]; then
+              docker run --rm --env-file "$APP_ENV_FILE" "$IMAGE_REF" npm run init-db
+            fi
+            docker compose --env-file "$DEPLOY_WORKDIR/.deploy.env" -f "$DEPLOY_WORKDIR/docker-compose.deploy.yml" pull
+            docker compose --env-file "$DEPLOY_WORKDIR/.deploy.env" -f "$DEPLOY_WORKDIR/docker-compose.deploy.yml" up -d --remove-orphans
+
+  post-deploy-smoke-test:
+    name: post-deploy-smoke-test
+    needs:
+      - resolve-environment
+      - deploy
+    if: needs.resolve-environment.outputs.deployment_environment != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run smoke test
+        run: node ./scripts/smoke/smoke-test.js --url=${{ vars.DEPLOY_SMOKE_URL }} --path=${{ vars.DEPLOY_SMOKE_PATH || '/api/v1/healthcheck' }}
