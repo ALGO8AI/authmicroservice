@@ -105,8 +105,6 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image_ref }}
             ${{ steps.meta.outputs.image_channel_ref }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   deploy:
     name: deploy
